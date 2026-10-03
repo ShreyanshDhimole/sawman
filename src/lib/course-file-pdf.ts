@@ -2,7 +2,13 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { PDFDocument } from 'pdf-lib';
 
-export const downloadCourseFilePdf = async (allData: any, settings: any, pos: any[], facultyName?: string) => {
+export const downloadCourseFilePdf = async (
+  allData: any,
+  settings: any,
+  pos: any[],
+  facultyName?: string,
+  academicHeaderOverride?: string
+) => {
   const { course, reportData, students, marks } = allData;
   const doc = new jsPDF();
   
@@ -31,6 +37,19 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
 
   const getPageCount = () => (doc as any).internal.getNumberOfPages();
 
+  // Helper to format year nicely (e.g. 1 -> 1st Year, 3 -> 3rd Year)
+  const formatYearText = (yr?: string | number) => {
+    if (!yr) return "";
+    const yStr = String(yr).trim();
+    if (/year|yr/i.test(yStr)) return yStr;
+    const num = parseInt(yStr, 10);
+    if (num === 1) return "1st Year";
+    if (num === 2) return "2nd Year";
+    if (num === 3) return "3rd Year";
+    if (num === 4) return "4th Year";
+    return `${yStr} Year`;
+  };
+
   // FRONT PAGE (Title Page)
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
@@ -38,10 +57,22 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
   
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
-  doc.text("Department of Information Technology", 105, 50, { align: "center" });
+  const deptName = course.departmentId?.name
+    ? (course.departmentId.name.startsWith("Department") ? course.departmentId.name : `Department of ${course.departmentId.name}`)
+    : "Department of Information Technology";
+  doc.text(deptName, 105, 50, { align: "center" });
   
+  // Format Academic Level from course option: Program + Year + Semester (e.g. B.Tech. 3rd Year Semester V)
+  const defaultAcademicHeader = [
+    course.program || "B.Tech.",
+    formatYearText(course.year),
+    course.semester ? `Semester ${course.semester}` : ""
+  ].filter(Boolean).join(" ");
+
+  const finalAcademicHeader = academicHeaderOverride?.trim() || defaultAcademicHeader || settings.SEMESTER || "B.Tech.";
+
   doc.setFontSize(13);
-  doc.text(settings.SEMESTER || "B.Tech 3 Year", 105, 60, { align: "center" });
+  doc.text(finalAcademicHeader, 105, 60, { align: "center" });
   
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
@@ -71,7 +102,10 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
   doc.setFont("helvetica", "bold");
   doc.text("Semester:", 50, 135);
   doc.setFont("helvetica", "normal");
-  doc.text(settings.SEMESTER_LABEL || 'SEM "A"', 110, 135);
+  const semesterDisplay = course.section
+    ? `SEM "${course.section}"`
+    : (course.semester ? `Semester ${course.semester}` : (settings.SEMESTER_LABEL || 'SEM "A"'));
+  doc.text(semesterDisplay, 110, 135);
   
   doc.setFont("helvetica", "bold");
   doc.text("Faculty:", 50, 145);

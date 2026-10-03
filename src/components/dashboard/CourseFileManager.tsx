@@ -39,11 +39,29 @@ export default function CourseFileManager({
   const [attendance, setAttendance] = useState<any[]>([]);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [timeTableWarning, setTimeTableWarning] = useState<string | null>(null);
+  const [academicHeader, setAcademicHeader] = useState("");
 
   const selectedCourse = useMemo(
     () => courses.find((c) => c._id === selectedCourseId),
     [courses, selectedCourseId],
   );
+
+  const computeAcademicHeader = (c: any) => {
+    if (!c) return "";
+    const prog = c.program || "B.Tech.";
+    let yr = "";
+    if (c.year) {
+      const yStr = String(c.year).trim();
+      if (/year|yr/i.test(yStr)) yr = yStr;
+      else if (yStr === "1") yr = "1st Year";
+      else if (yStr === "2") yr = "2nd Year";
+      else if (yStr === "3") yr = "3rd Year";
+      else if (yStr === "4") yr = "4th Year";
+      else yr = `${yStr} Year`;
+    }
+    const sem = c.semester ? `Semester ${c.semester}` : "";
+    return [prog, yr, sem].filter(Boolean).join(" ");
+  };
 
   const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const cid = e.target.value;
@@ -51,9 +69,11 @@ export default function CourseFileManager({
     setTimeTableWarning(null);
     if (!cid) {
       setSyllabusText("");
+      setAcademicHeader("");
       return;
     }
     const c = courses.find((course) => course._id === cid);
+    setAcademicHeader(computeAcademicHeader(c));
     setSyllabusText(c?.syllabus || "");
     setLecturePlan(c?.lecturePlan || null);
 
@@ -140,7 +160,7 @@ export default function CourseFileManager({
         if (assignments) allData.course.assignments = assignments;
         if (attendance && attendance.length > 0) allData.course.attendance = attendance;
       }
-      await downloadCourseFilePdf(allData, settings, pos, facultyName);
+      await downloadCourseFilePdf(allData, settings, pos, facultyName, academicHeader);
       toast.success("Course File PDF Downloaded!", { id: toastId });
     } catch (e: any) {
       toast.error("Failed to generate PDF: " + e.message, { id: toastId });
@@ -255,13 +275,25 @@ export default function CourseFileManager({
               Shri G.S. Institute of Technology &amp; Science, Indore
             </h1>
             <h2 className="text-lg font-semibold text-gray-700">
-              Department of Information Technology
+              {selectedCourse.departmentId?.name
+                ? (selectedCourse.departmentId.name.startsWith("Department")
+                    ? selectedCourse.departmentId.name
+                    : `Department of ${selectedCourse.departmentId.name}`)
+                : "Department of Information Technology"}
             </h2>
-            <p className="font-semibold text-gray-600">
-              {selectedCourse.program || "B.Tech."}{" "}
-              {selectedCourse.year ? `${selectedCourse.year} Year` : ""}{" "}
-              Semester {selectedCourse.semester || "V"}
-            </p>
+            <div className="flex flex-col items-center justify-center my-2">
+              <input
+                type="text"
+                value={academicHeader}
+                onChange={(e) => setAcademicHeader(e.target.value)}
+                className="font-semibold text-gray-800 text-center border-b border-dashed border-gray-400 focus:border-blue-600 outline-none px-3 py-1 text-base bg-transparent max-w-lg w-full hover:bg-gray-100 rounded transition"
+                title="Edit the Academic Level/Year printed on the cover page"
+                placeholder="e.g. B.Tech. 3rd Year Semester V"
+              />
+              <span className="text-[11px] text-gray-400 mt-0.5 print:hidden">
+                (Auto-filled from chosen course • Editable for PDF cover)
+              </span>
+            </div>
             <h3 className="text-2xl font-black mt-4 underline underline-offset-4 mb-8">
               COURSE FILE
             </h3>
