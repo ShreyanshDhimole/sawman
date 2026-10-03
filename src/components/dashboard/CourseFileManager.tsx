@@ -26,7 +26,7 @@ export default function CourseFileManager({
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [syllabusText, setSyllabusText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [totalLectures, setTotalLectures] = useState(40);
+  const [totalLectures, setTotalLectures] = useState<number | string>(40);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [lecturePlan, setLecturePlan] = useState<any[] | null>(null);
 
@@ -220,10 +220,12 @@ export default function CourseFileManager({
     setIsGeneratingPlan(true);
     const toastId = toast.loading("Generating AI Course Plan...");
 
+    const lectures = Number(totalLectures) > 0 ? Number(totalLectures) : 40;
+
     const res = await generateCoursePlanAction(
       selectedCourseId,
       syllabusText,
-      totalLectures,
+      lectures,
     );
 
     if (res.success && res.plan) {
@@ -516,9 +518,17 @@ export default function CourseFileManager({
                       type="text"
                       inputMode="numeric"
                       value={totalLectures}
-                      onChange={(e) =>
-                        setTotalLectures(parseInt(e.target.value) || 40)
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || /^\d+$/.test(val)) {
+                          setTotalLectures(val);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (totalLectures === "" || Number(totalLectures) < 1) {
+                          setTotalLectures(40);
+                        }
+                      }}
                       className="w-20 px-3 py-2 border rounded focus:ring-blue-500 text-gray-900"
                     />
                   </div>

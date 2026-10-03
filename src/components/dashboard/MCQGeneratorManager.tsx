@@ -18,8 +18,8 @@ export default function MCQGeneratorManager({ courses }: { courses: any[] }) {
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [syllabusText, setSyllabusText] = useState("");
   const [unitsText, setUnitsText] = useState("");
-  const [mcqCount, setMcqCount] = useState(10);
-  const [marksPerQuestion, setMarksPerQuestion] = useState(1);
+  const [mcqCount, setMcqCount] = useState<number | string>(10);
+  const [marksPerQuestion, setMarksPerQuestion] = useState<number | string>(1);
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedMcqs, setGeneratedMcqs] = useState<GeneratedMcq[]>([]);
@@ -85,12 +85,15 @@ export default function MCQGeneratorManager({ courses }: { courses: any[] }) {
     setIsGenerating(true);
     const toastId = toast.loading("Generating MCQs from syllabus...");
 
+    const count = Number(mcqCount) > 0 ? Number(mcqCount) : 10;
+    const marks = Number(marksPerQuestion) > 0 ? Number(marksPerQuestion) : 1;
+
     const res = await generateMcqsAction(
       selectedCourseId,
       syllabusText,
       unitsText,
-      mcqCount,
-      marksPerQuestion
+      count,
+      marks
     );
 
     if (res.success && Array.isArray(res.mcqs)) {
@@ -177,7 +180,17 @@ export default function MCQGeneratorManager({ courses }: { courses: any[] }) {
                   type="text"
                   inputMode="numeric"
                   value={mcqCount}
-                  onChange={(e) => setMcqCount(Number(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || /^\d+$/.test(val)) {
+                      setMcqCount(val);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (mcqCount === "" || Number(mcqCount) < 1) {
+                      setMcqCount(10);
+                    }
+                  }}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>
@@ -188,7 +201,17 @@ export default function MCQGeneratorManager({ courses }: { courses: any[] }) {
                   type="text"
                   inputMode="numeric"
                   value={marksPerQuestion}
-                  onChange={(e) => setMarksPerQuestion(Number(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || /^\d+$/.test(val)) {
+                      setMarksPerQuestion(val);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (marksPerQuestion === "" || Number(marksPerQuestion) < 1) {
+                      setMarksPerQuestion(1);
+                    }
+                  }}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 />
               </div>

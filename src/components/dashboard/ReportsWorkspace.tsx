@@ -25,7 +25,7 @@ export default function ReportsWorkspace() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
-  const [indirectLevels, setIndirectLevels] = useState<Record<string, number>>({});
+  const [indirectLevels, setIndirectLevels] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (session?.user?.email) {
@@ -37,12 +37,16 @@ export default function ReportsWorkspace() {
     if (!selectedCourse) return;
     setLoading(true);
     try {
-      const data = await generateCourseReportData(selectedCourse, indirectLevels, saveIndirectLevels);
+      const parsedIndirectLevels: Record<string, number> = {};
+      Object.entries(indirectLevels).forEach(([key, val]) => {
+        parsedIndirectLevels[key] = val === "" ? 0 : Number(val) || 0;
+      });
+      const data = await generateCourseReportData(selectedCourse, parsedIndirectLevels, saveIndirectLevels);
       setReportData(data);
 
-      const nextLevels: Record<string, number> = {};
+      const nextLevels: Record<string, string> = {};
       data.overallCourseRows.forEach((row: any) => {
-        nextLevels[row.coId] = row.indirectLevel ?? 0;
+        nextLevels[row.coId] = String(row.indirectLevel ?? 0);
       });
       setIndirectLevels(nextLevels);
     } finally {
@@ -265,13 +269,16 @@ export default function ReportsWorkspace() {
                     type="text"
                     inputMode="decimal"
                     className="mt-3 w-full rounded border border-gray-300 px-3 py-2"
-                    value={indirectLevels[row.coId] ?? 0}
-                    onChange={(event) =>
-                      setIndirectLevels((current) => ({
-                        ...current,
-                        [row.coId]: Number(event.target.value),
-                      }))
-                    }
+                    value={indirectLevels[row.coId] ?? ""}
+                    onChange={(event) => {
+                      const val = event.target.value;
+                      if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                        setIndirectLevels((current) => ({
+                          ...current,
+                          [row.coId]: val,
+                        }));
+                      }
+                    }}
                   />
                 </div>
               ))}
