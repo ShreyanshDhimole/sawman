@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getFacultyDashboardStats } from "@/actions/dashboard-actions";
+import { deleteStudent } from "@/actions/student-actions";
 import StudentUpload from "@/components/dashboard/StudentUpload";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import toast from "react-hot-toast";
+import { Trash2 } from "lucide-react";
 
 export default function FacultyDashboard() {
   const { data: session }: any = useSession();
@@ -12,14 +15,31 @@ export default function FacultyDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
 
-  useEffect(() => {
+  const fetchStats = () => {
     if (session?.user?.email) {
+      setLoading(true);
       getFacultyDashboardStats(session.user.email).then(data => {
         setStats(data);
         setLoading(false);
       });
     }
+  };
+
+  useEffect(() => {
+    fetchStats();
   }, [session]);
+
+  const handleDeleteStudent = async (studentId: string) => {
+    if (!confirm("Are you sure you want to delete this student?")) return;
+    
+    const result = await deleteStudent(studentId);
+    if (result.success) {
+      toast.success(result.message);
+      fetchStats();
+    } else {
+      toast.error(result.message);
+    }
+  };
 
   if (loading) {
     return (
@@ -96,6 +116,7 @@ export default function FacultyDashboard() {
                             <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                            <th className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
@@ -105,6 +126,15 @@ export default function FacultyDashboard() {
                               <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{student.name}</td>
                               <td className="px-4 py-2 text-gray-500 whitespace-nowrap">{student.email || '-'}</td>
                               <td className="px-4 py-2 text-gray-500 whitespace-nowrap">{student.contactNo || '-'}</td>
+                              <td className="px-4 py-2 text-center whitespace-nowrap">
+                                <button 
+                                  onClick={() => handleDeleteStudent(student._id)}
+                                  className="text-red-500 hover:text-red-700 p-1"
+                                  title="Delete Student"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>

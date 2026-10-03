@@ -49,19 +49,28 @@ export async function uploadStudentExcel(formData: FormData) {
       return { success: false, message: "No valid students found. Ensure columns exist for 'Name of student' and 'Roll No.'" };
     }
 
-    // Upsert students so we don't have duplicates if faculty uploads again
-    for (const stu of newStudents) {
-      await Student.findOneAndUpdate(
-        { registerNumber: stu.registerNumber, courseId },
-        { $set: stu },
-        { upsert: true, new: true }
-      );
-    }
+    // Delete existing students for this course to replace them
+    await Student.deleteMany({ courseId });
+
+    // Insert new students
+    await Student.insertMany(newStudents);
 
     revalidatePath("/dashboard");
     return { success: true, message: `Successfully inserted/updated ${newStudents.length} students.` };
   } catch (error: any) {
     console.error("Excel upload error:", error);
     return { success: false, message: error.message || "Failed to process Excel file" };
+  }
+}
+
+export async function deleteStudent(studentId: string) {
+  try {
+    await dbConnect();
+    await Student.findByIdAndDelete(studentId);
+    revalidatePath("/dashboard");
+    return { success: true, message: "Student deleted successfully" };
+  } catch (error: any) {
+    console.error("Delete student error:", error);
+    return { success: false, message: error.message || "Failed to delete student" };
   }
 }

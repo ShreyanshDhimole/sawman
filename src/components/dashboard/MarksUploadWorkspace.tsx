@@ -287,6 +287,17 @@ export default function MarksUploadWorkspace() {
     }));
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const inputs = Array.from(document.querySelectorAll<HTMLInputElement>(".mark-input"));
+      const index = inputs.indexOf(e.currentTarget);
+      if (index > -1 && index < inputs.length - 1) {
+        inputs[index + 1].focus();
+      }
+    }
+  }
+
   async function handleQuestionFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -679,11 +690,11 @@ export default function MarksUploadWorkspace() {
                       <td className="px-3 py-2 text-gray-700">{student.name}</td>
                       {isQuestionMode ? questionRows.map((row) => (
                         <td key={row.id} className="px-3 py-2">
-                          <input type="text" inputMode="numeric" className="w-24 rounded border border-gray-300 px-2 py-1" value={questionScores[student.registerNumber]?.[row.name] || ""} onChange={(event) => updateQuestionScore(student.registerNumber, row.name, event.target.value)} />
+                          <input type="text" inputMode="numeric" className="mark-input w-24 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-500 outline-none" value={questionScores[student.registerNumber]?.[row.name] || ""} onChange={(event) => updateQuestionScore(student.registerNumber, row.name, event.target.value)} onKeyDown={handleKeyDown} />
                         </td>
                       )) : cos.map((co) => (
                         <td key={co._id} className="px-3 py-2">
-                          <input type="text" inputMode="numeric" className="w-24 rounded border border-gray-300 px-2 py-1" value={coScores[student.registerNumber]?.[co._id] || ""} onChange={(event) => updateCoScore(student.registerNumber, co._id, event.target.value)} />
+                          <input type="text" inputMode="numeric" className="mark-input w-24 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-500 outline-none" value={coScores[student.registerNumber]?.[co._id] || ""} onChange={(event) => updateCoScore(student.registerNumber, co._id, event.target.value)} onKeyDown={handleKeyDown} />
                         </td>
                       ))}
                     </tr>

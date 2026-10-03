@@ -16,7 +16,6 @@ import {
   calculateOverallDirectAttainment,
   type StoredMark,
 } from "@/lib/calculations";
-import { getCalculationConfig } from "@/lib/getCalcConfig";
 
 function roundToTwo(value: number) {
   return Number(value.toFixed(2));
@@ -45,7 +44,6 @@ export async function generateCourseReportData(
   saveIndirectLevels = false
 ) {
   await dbConnect();
-  const calcConfig = await getCalculationConfig();
   
   const course = await Course.findById(courseId).populate("departmentId").lean() as any;
   if (!course) throw new Error("Course not found");
@@ -80,8 +78,8 @@ export async function generateCourseReportData(
         maxScore: mark.maxScore,
       })) as StoredMark[];
 
-    const internalAttainment = calculateInternalCOAttainment(studentIds, coMarks, calcConfig);
-    const endSemAttainment = calculateEndSemCOAttainment(studentIds, coMarks, calcConfig);
+    const internalAttainment = calculateInternalCOAttainment(studentIds, coMarks);
+    const endSemAttainment = calculateEndSemCOAttainment(studentIds, coMarks);
     const coIdString = co._id.toString();
     const hasSubmittedIndirect = Object.prototype.hasOwnProperty.call(indirectLevels, coIdString);
     const indirectLevel = Number(
@@ -89,12 +87,8 @@ export async function generateCourseReportData(
         ? indirectLevels[coIdString]
         : savedIndirectMap.get(coIdString) ?? 0
     );
-    const overallDirectLevel = calculateOverallDirectAttainment(
-      endSemAttainment.avgLevel,
-      internalAttainment.avgLevel,
-      calcConfig
-    );
-    const finalAttainment = calculateFinalCourseAttainment(overallDirectLevel, indirectLevel, calcConfig);
+    const overallDirectLevel = calculateOverallDirectAttainment(endSemAttainment.avgLevel, internalAttainment.avgLevel);
+    const finalAttainment = calculateFinalCourseAttainment(overallDirectLevel, indirectLevel);
     coAttainments[coIdString] = finalAttainment;
 
     if (saveIndirectLevels && hasSubmittedIndirect) {

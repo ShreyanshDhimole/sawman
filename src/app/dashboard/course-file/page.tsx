@@ -25,7 +25,9 @@ export default async function CourseFilePage() {
     <div className="max-w-6xl mx-auto pb-16">
       <Toaster position="top-right" />
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Faculty Course File</h1>
-      <CourseFileManager courses={courses} settings={settings} pos={pos} />
+
+      
+      <CourseFileManager courses={courses} settings={settings} pos={pos} facultyName={session.user.name || ""} />
     </div>
   );
 }

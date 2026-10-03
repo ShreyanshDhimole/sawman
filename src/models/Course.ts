@@ -6,9 +6,9 @@ export interface ICourse extends Document {
   departmentId: mongoose.Types.ObjectId;
   facultyId: mongoose.Types.ObjectId;
   session?: string;
+  academicYear?: string;
   program?: string;
   year?: string;
-  academicYear?: string;
   semester?: string;
   section?: string;
   syllabus?: string;
@@ -23,13 +23,13 @@ export interface ICourse extends Document {
 
 const CourseSchema: Schema = new Schema({
   name: { type: String, required: true },
-  code: { type: String, required: true, unique: true },
+  code: { type: String, required: true },
   departmentId: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
   facultyId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   session: { type: String },
+  academicYear: { type: String },
   program: { type: String, default: 'B.Tech' },
   year: { type: String },
-  academicYear: { type: String },
   semester: { type: String },
   section: { type: String },
   syllabus: { type: String },

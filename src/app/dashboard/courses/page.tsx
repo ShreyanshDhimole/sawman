@@ -1,8 +1,12 @@
-import { getDepartments, getFaculty, createDepartment, createCourse, createFaculty } from "@/actions/admin-actions";
+import { getDepartments, getFaculty } from "@/actions/admin-actions";
 import Course from "@/models/Course";
 import dbConnect from "@/lib/mongoose";
 import CourseForm from "@/components/dashboard/CourseForm";
 import ExportFacultyLoad from "@/components/dashboard/ExportFacultyLoad";
+import FacultyManager from "@/components/dashboard/FacultyManager";
+import CourseManager from "@/components/dashboard/CourseManager";
+import DepartmentForm from "@/components/dashboard/DepartmentForm";
+import FacultyForm from "@/components/dashboard/FacultyForm";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +15,6 @@ export default async function CoursesPage() {
   const departments = await getDepartments();
   const faculty = await getFaculty();
 
-  async function submitDepartment(formData: FormData) {
-    "use server";
-    await createDepartment(formData);
-  }
-
-  async function submitFaculty(formData: FormData) {
-    "use server";
-    await createFaculty(formData);
-  }
   
   const coursesRaw = await Course.find({})
     .populate("departmentId")
@@ -35,45 +30,20 @@ export default async function CoursesPage() {
       
       
         {/* Create Department Form */}
-        <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Create Department</h2>
-          <form action={submitDepartment} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department Name</label>
-              <input type="text" name="name" required className="w-full px-4 py-2 border rounded focus:ring-blue-500" placeholder="Computer Science" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department Code</label>
-              <input type="text" name="code" required className="w-full px-4 py-2 border rounded focus:ring-blue-500" placeholder="CSE" />
-            </div>
-            <button type="submit" className="w-full py-2 bg-slate-900 text-white font-medium rounded hover:bg-slate-800 transition">Save Department</button>
-          </form>
-        </section>
+        <DepartmentForm />
 
-  {/* Create Faculty Form (New) */}
-        <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Add Faculty</h2>
-          <form action={submitFaculty} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input type="text" name="name" required className="w-full px-4 py-2 border rounded focus:ring-blue-500" placeholder="shiva khanna" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" name="email" required className="w-full px-4 py-2 border rounded focus:ring-blue-500" placeholder="faculty@example.com" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Initial Password</label>
-              <input type="password" name="password" required className="w-full px-4 py-2 border rounded focus:ring-blue-500" placeholder="password123" />
-            </div>
-            <button type="submit" className="w-full py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700 transition">Register Faculty</button>
-          </form>
-        </section>
+        {/* Create Faculty Form (New) */}
+        <FacultyForm />
 
         {/* Create Course Form */}
         <CourseForm departments={departments} faculty={faculty} />
       </div>
 
+      {/* Data Management Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <FacultyManager faculty={faculty} />
+        <CourseManager courses={courses} faculty={faculty} departments={departments} />
+      </div>
       
       {/* Grouped Courses List */}
       <section className="space-y-6">
@@ -134,7 +104,7 @@ export default async function CoursesPage() {
                           {facCourses.map((c: any) => (
                             <tr key={c._id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{c.session || '-'}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{c.academicYear || '-'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">{c.academicYear || '-'}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 Yr {c.year || '-'} • {c.program || 'B.Tech'}
                               </td>

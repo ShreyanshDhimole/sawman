@@ -282,18 +282,32 @@ Return ONLY valid JSON. No explanation.
 function cleanJsonResponse(content: string) {
   let parsedContent = content.trim();
 
-  if (parsedContent.includes("```")) {
-    const fencedParts = parsedContent.split("```");
-    parsedContent = fencedParts[1] || fencedParts[0];
-    if (parsedContent.toLowerCase().startsWith("json")) {
-      parsedContent = parsedContent.substring(4);
+  const codeBlockMatch = parsedContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlockMatch) {
+    parsedContent = codeBlockMatch[1];
+  } else {
+    const firstBrace = parsedContent.indexOf("{");
+    const firstBracket = parsedContent.indexOf("[");
+    let startIdx = -1;
+    let endIdx = -1;
+
+    if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+      startIdx = firstBrace;
+      endIdx = parsedContent.lastIndexOf("}");
+    } else if (firstBracket !== -1) {
+      startIdx = firstBracket;
+      endIdx = parsedContent.lastIndexOf("]");
+    }
+
+    if (startIdx !== -1 && endIdx > startIdx) {
+      parsedContent = parsedContent.substring(startIdx, endIdx + 1);
     }
   }
 
   return parsedContent.trim();
 }
 
-async function generateGroqCompletion(prompt: string, temperature = 0.3) {
+async function generateGroqCompletion(prompt: string, temperature = 0.3, maxTokens = 8192) {
   const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
@@ -307,14 +321,26 @@ async function generateGroqCompletion(prompt: string, temperature = 0.3) {
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
       messages: [{ role: "user", content: prompt }],
       temperature,
+      max_tokens: maxTokens,
+      response_format: { type: "json_object" },
     }),
   });
 
   if (!response.ok) {
-    throw new Error("API responded with status " + response.status);
+    const errorText = await response.text();
+    let errorMessage = `API responded with status ${response.status}`;
+    try {
+      const parsedError = JSON.parse(errorText);
+      if (parsedError?.error?.message) {
+        errorMessage += `: ${parsedError.error.message}`;
+      }
+    } catch {
+      if (errorText) errorMessage += `: ${errorText.slice(0, 200)}`;
+    }
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();
@@ -391,9 +417,14 @@ Return ONLY valid JSON in this exact shape:
 `;
 
   try {
-    const content = await generateGroqCompletion(prompt, 0.4);
+    const content = await generateGroqCompletion(prompt, 0.4, 8192);
     const parsed = JSON.parse(content);
-    const mcqs = Array.isArray(parsed) ? parsed : parsed?.mcqs;
+    let mcqs: any[] | null = null;
+    if (Array.isArray(parsed)) {
+      mcqs = parsed;
+    } else if (parsed && typeof parsed === "object") {
+      mcqs = parsed.mcqs || parsed.questions || parsed.data || (Object.values(parsed).find(Array.isArray) as any[]);
+    }
 
     if (!Array.isArray(mcqs) || mcqs.length === 0) {
       throw new Error("Generated MCQ data is not in the expected format.");

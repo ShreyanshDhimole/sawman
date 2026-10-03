@@ -4,6 +4,9 @@ import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
+export const dynamic = "force-dynamic";
+
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({

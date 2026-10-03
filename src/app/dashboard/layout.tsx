@@ -3,13 +3,19 @@
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, GraduationCap, Upload, FileText, Settings, LogOut, CheckSquare } from "lucide-react";
+import { LayoutDashboard, BookOpen, GraduationCap, Upload, FileText, Settings, LogOut, CheckSquare, Menu, X } from "lucide-react";
 import clsx from "clsx";
+import { useState, useEffect } from "react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
-  // status gives loading,autenticated and unauthenticated status 
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu when pathname changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   if (status === "loading") {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -44,11 +50,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const links = role === "admin" ? adminLinks : facultyLinks;
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-gray-100 overflow-hidden relative">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 font-bold text-lg tracking-wide">
-          <GraduationCap className="mr-3" /> OBE System
+      <aside className={clsx(
+        "fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 font-bold text-lg tracking-wide">
+          <div className="flex items-center">
+            <GraduationCap className="mr-3" /> OBE System
+          </div>
+          <button className="md:hidden text-gray-300 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+            <X size={20} />
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto py-4">
           <nav className="space-y-1 px-3">
@@ -84,14 +106,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Mobile header placeholder */}
-        <header className="h-16 bg-white shadow-sm flex items-center px-6 md:hidden">
+        {/* Mobile header */}
+        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 md:hidden">
           <div className="font-bold text-lg flex items-center text-slate-900">
-            <GraduationCap className="mr-2" /> OBE System
+            <GraduationCap className="mr-2 text-slate-800" /> OBE System
           </div>
+          <button 
+            className="p-2 -mr-2 text-slate-600 hover:text-slate-900"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <Menu size={24} />
+          </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 relative">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
           {children}
         </div>
       </main>

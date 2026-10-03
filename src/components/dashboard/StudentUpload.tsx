@@ -31,7 +31,7 @@ export default function StudentUpload({ courseId, courseName }: { courseId: stri
   }
 
   return (
-    <div className="mt-6 p-4 border border-slate-200 rounded-lg bg-slate-50 flex items-center justify-between">
+    <div className="mt-6 p-4 border border-slate-200 rounded-lg bg-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
         <h4 className="text-sm font-semibold text-gray-800">Upload Students</h4>
         <p className="text-xs text-gray-500 mt-1">

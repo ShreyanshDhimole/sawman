@@ -6,26 +6,6 @@ export type StoredMark = {
   maxScore: number;
 };
 
-export type CalculationConfig = {
-  level3Threshold: number;
-  level2Threshold: number;
-  level1Threshold: number;
-  directEndSemWeight: number;
-  directInternalWeight: number;
-  finalDirectWeight: number;
-  finalIndirectWeight: number;
-};
-
-export const DEFAULT_CALC_CONFIG: CalculationConfig = {
-  level3Threshold: 65,
-  level2Threshold: 50,
-  level1Threshold: 35,
-  directEndSemWeight: 0.7,
-  directInternalWeight: 0.3,
-  finalDirectWeight: 0.8,
-  finalIndirectWeight: 0.2,
-};
-
 export type StudentCOAttainment = {
   studentId: string;
   mst1Score: number;
@@ -62,13 +42,10 @@ function getPercentage(score: number, maxScore: number) {
   return (score / maxScore) * 100;
 }
 
-export function getAttainmentLevelFromPercentage(
-  percentage: number,
-  config: CalculationConfig = DEFAULT_CALC_CONFIG
-) {
-  if (percentage >= config.level3Threshold) return 3;
-  if (percentage >= config.level2Threshold) return 2;
-  if (percentage >= config.level1Threshold) return 1;
+export function getAttainmentLevelFromPercentage(percentage: number) {
+  if (percentage >= 65) return 3;
+  if (percentage >= 50) return 2;
+  if (percentage >= 35) return 1;
   return 0;
 }
 
@@ -100,11 +77,7 @@ export function pickBestMst(
   return { type: null, score: 0, maxScore: 0 };
 }
 
-export function calculateInternalCOAttainment(
-  studentIds: string[],
-  marks: StoredMark[],
-  config: CalculationConfig = DEFAULT_CALC_CONFIG
-) {
+export function calculateInternalCOAttainment(studentIds: string[], marks: StoredMark[]) {
   const marksByStudent = new Map<string, Partial<Record<StoredMark["examType"], { score: number; maxScore: number }>>>();
 
   for (const mark of marks) {
@@ -126,7 +99,7 @@ export function calculateInternalCOAttainment(
     const totalScore = bestMst.score + assignment.score + classWork.score;
     const totalMax = bestMst.maxScore + assignment.maxScore + classWork.maxScore;
     const percentage = getPercentage(totalScore, totalMax);
-    const level = getAttainmentLevelFromPercentage(percentage, config);
+    const level = getAttainmentLevelFromPercentage(percentage);
 
     return {
       studentId,
@@ -164,11 +137,7 @@ export function calculateInternalCOAttainment(
   };
 }
 
-export function calculateEndSemCOAttainment(
-  studentIds: string[],
-  marks: StoredMark[],
-  config: CalculationConfig = DEFAULT_CALC_CONFIG
-) {
+export function calculateEndSemCOAttainment(studentIds: string[], marks: StoredMark[]) {
   const marksByStudent = new Map<string, Partial<Record<StoredMark["examType"], { score: number; maxScore: number }>>>();
 
   for (const mark of marks) {
@@ -192,7 +161,7 @@ export function calculateEndSemCOAttainment(
       score: totalScore,
       maxScore: totalMax,
       percentage: roundToTwo(percentage),
-      level: getAttainmentLevelFromPercentage(percentage, config),
+      level: getAttainmentLevelFromPercentage(percentage),
     };
   });
 
@@ -212,26 +181,12 @@ export function calculateEndSemCOAttainment(
   };
 }
 
-export function calculateOverallDirectAttainment(
-  endSemLevel: number,
-  internalLevel: number,
-  config: CalculationConfig = DEFAULT_CALC_CONFIG
-) {
-  return roundToTwo(
-    (endSemLevel * config.directEndSemWeight) +
-    (internalLevel * config.directInternalWeight)
-  );
+export function calculateOverallDirectAttainment(endSemLevel: number, internalLevel: number) {
+  return roundToTwo((endSemLevel * 0.7) + (internalLevel * 0.3));
 }
 
-export function calculateFinalCourseAttainment(
-  overallDirectLevel: number,
-  indirectLevel: number,
-  config: CalculationConfig = DEFAULT_CALC_CONFIG
-) {
-  return roundToTwo(
-    (overallDirectLevel * config.finalDirectWeight) +
-    (indirectLevel * config.finalIndirectWeight)
-  );
+export function calculateFinalCourseAttainment(overallDirectLevel: number, indirectLevel: number) {
+  return roundToTwo((overallDirectLevel * 0.8) + (indirectLevel * 0.2));
 }
 
 export function calculateAverageAttainment(values: number[]) {

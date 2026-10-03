@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { PDFDocument } from 'pdf-lib';
 
-export const downloadCourseFilePdf = async (allData: any, settings: any, pos: any[]) => {
+export const downloadCourseFilePdf = async (allData: any, settings: any, pos: any[], facultyName?: string) => {
   const { course, reportData, students, marks } = allData;
   const doc = new jsPDF();
   
@@ -66,7 +66,7 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
   doc.setFont("helvetica", "bold");
   doc.text("Session:", 50, 125);
   doc.setFont("helvetica", "normal");
-  doc.text(settings.SESSION || "Jan - May", 110, 125);
+  doc.text(course.session || settings.SESSION || "Jan - May", 110, 125);
   
   doc.setFont("helvetica", "bold");
   doc.text("Semester:", 50, 135);
@@ -76,7 +76,7 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
   doc.setFont("helvetica", "bold");
   doc.text("Faculty:", 50, 145);
   doc.setFont("helvetica", "normal");
-  doc.text("Course Instructor", 110, 145);
+  doc.text(facultyName || "Course Instructor", 110, 145);
 
   // TABLE OF CONTENTS (Index Page)
   addPage();
@@ -192,11 +192,31 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
   // 5. Time Table
   if (course.timeTablePdf?.startsWith("data:application/pdf")) {
     insertIndexTimeTable = getPageCount();
+  } else if (course.timeTablePdf?.startsWith("data:image/")) {
+    addPage();
+    addHeader("5. Time Table");
+    try {
+      const imgProps = doc.getImageProperties(course.timeTablePdf);
+      const maxWidth = 180;
+      const maxHeight = 230;
+      let renderW = maxWidth;
+      let renderH = (imgProps.height * renderW) / imgProps.width;
+      if (renderH > maxHeight) {
+        renderH = maxHeight;
+        renderW = (imgProps.width * renderH) / imgProps.height;
+      }
+      const posX = 14 + (maxWidth - renderW) / 2;
+      doc.addImage(course.timeTablePdf, imgProps.fileType || "JPEG", posX, 35, renderW, renderH);
+    } catch (err) {
+      console.error("Error embedding timetable image in PDF:", err);
+      doc.text("Time table image could not be rendered.", 14, 40);
+    }
+    insertIndexTimeTable = -1;
   } else {
     addPage();
     addHeader("5. Time Table");
     doc.text("Time table not uploaded as PDF.", 14, 40);
-    insertIndexTimeTable = getPageCount();
+    insertIndexTimeTable = -1;
   }
 
   // 6. Lecture Plan
@@ -434,7 +454,7 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
       for (let i = 0; i < binaryStr.length; i++) {
         bytes[i] = binaryStr.charCodeAt(i);
       }
-      return await PDFDocument.load(bytes);
+      return await PDFDocument.load(bytes, { ignoreEncryption: true });
     } catch (e) {
       console.error("Error loading PDF from data URL", e);
       return null;
@@ -474,13 +494,17 @@ export const downloadCourseFilePdf = async (allData: any, settings: any, pos: an
     }
   }
 
-  if (course.timeTablePdf?.startsWith("data:application/pdf")) {
+  if (insertIndexTimeTable !== -1 && course.timeTablePdf?.startsWith("data:application/pdf")) {
     const ttDoc = await loadPdfFromDataUrl(course.timeTablePdf);
     if (ttDoc) {
       const copiedPages = await mergedPdf.copyPages(ttDoc, ttDoc.getPageIndices());
       for (let i = 0; i < copiedPages.length; i++) {
           mergedPdf.insertPage(insertIndexTimeTable + i, copiedPages[i]);
       }
+    } else {
+      console.warn("Could not load timetable PDF, inserting fallback notice page.");
+      const fallbackPage = mergedPdf.insertPage(insertIndexTimeTable);
+      fallbackPage.drawText("5. Time Table: Failed to load uploaded PDF file.", { x: 50, y: 750, size: 12 });
     }
   }
 

@@ -7,7 +7,7 @@ import { createCourse } from "@/actions/admin-actions";
 export default function CourseForm({ departments, faculty }: { departments: any[], faculty: any[] }) {
   const currentYear = new Date().getFullYear();
   const defaultAcademicYear = `${currentYear}-${(currentYear + 1).toString().slice(2)}`;
-
+  
   const [session, setSession] = useState("");
   const [academicYear, setAcademicYear] = useState(defaultAcademicYear);
   const [program, setProgram] = useState("B.Tech");
@@ -16,9 +16,10 @@ export default function CourseForm({ departments, faculty }: { departments: any[
   const [semester, setSemester] = useState("");
   const [section, setSection] = useState("");
 
+  // Generate academic year options: 5 years back + 3 years forward
   const academicYearOptions = Array.from({ length: 9 }, (_, i) => {
-    const yearValue = currentYear - 5 + i;
-    return `${yearValue}-${(yearValue + 1).toString().slice(2)}`;
+    const y = currentYear - 5 + i;
+    return `${y}-${(y + 1).toString().slice(2)}`;
   });
 
   const isFormCascaded = session && academicYear && program && departmentId && year && semester && section;
@@ -38,7 +39,6 @@ export default function CourseForm({ departments, faculty }: { departments: any[
       toast.error(result.error);
     } else {
       toast.success("Course Created Successfully!");
-      // Reset form if needed, maybe using standard form reset
     }
   }
 
@@ -48,7 +48,7 @@ export default function CourseForm({ departments, faculty }: { departments: any[
       
       {/* Cascading Selection */}
       <div className="space-y-4 mb-6 border-b pb-6">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Session</label>
             <select value={session} onChange={e => setSession(e.target.value)} className="w-full px-4 py-2 border rounded focus:ring-blue-500">
@@ -60,8 +60,8 @@ export default function CourseForm({ departments, faculty }: { departments: any[
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
             <select value={academicYear} onChange={e => setAcademicYear(e.target.value)} className="w-full px-4 py-2 border rounded focus:ring-blue-500">
-              {academicYearOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
+              {academicYearOptions.map(y => (
+                <option key={y} value={y}>{y}</option>
               ))}
             </select>
           </div>
@@ -73,6 +73,7 @@ export default function CourseForm({ departments, faculty }: { departments: any[
             <select value={program} onChange={e => setProgram(e.target.value)} className="w-full px-4 py-2 border rounded focus:ring-blue-500">
               <option value="B.Tech">B.Tech</option>
               <option value="M.Tech">M.Tech</option>
+              <option value="MCA">MCA</option>
             </select>
           </div>
         )}
@@ -103,7 +104,7 @@ export default function CourseForm({ departments, faculty }: { departments: any[
         )}
 
         {session && program && departmentId && year && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
               <select value={semester} onChange={e => setSemester(e.target.value)} className="w-full px-4 py-2 border rounded focus:ring-blue-500">
@@ -115,7 +116,7 @@ export default function CourseForm({ departments, faculty }: { departments: any[
               <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
               <select value={section} onChange={e => setSection(e.target.value)} className="w-full px-4 py-2 border rounded focus:ring-blue-500">
                 <option value="">-- Section --</option>
-                {['A','B'].map(s => <option key={s} value={s}>{s}</option>)}
+                {['A','B','Both'].map(s => <option key={s} value={s}>{s === 'Both' ? 'Both (A & B)' : s}</option>)}
               </select>
             </div>
           </div>
