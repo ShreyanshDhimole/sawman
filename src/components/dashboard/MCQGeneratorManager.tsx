@@ -125,7 +125,7 @@ export default function MCQGeneratorManager({ courses }: { courses: any[] }) {
           <option value="">-- Choose Subject --</option>
           {courses.map((course) => (
             <option key={course._id} value={course._id}>
-              {course.name} ({course.code}) - {course.session}
+              {course.name} ({course.code}){course.section ? ` - Section ${course.section}` : ""}{course.session ? ` (${course.session})` : ""}
             </option>
           ))}
         </select>

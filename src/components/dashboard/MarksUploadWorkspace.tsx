@@ -7,7 +7,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { getCOs, getCourseStudents, getFacultyCourses } from "@/actions/faculty-actions";
 import { getSavedMarksUpload, processCOMarksBatch, processMarksBatchByQuestions } from "@/actions/marks-actions";
 
-type Course = { _id: string; name: string; code: string };
+type Course = { _id: string; name: string; code: string; section?: string; session?: string };
 type CourseOutcome = { _id: string; code: string; description: string };
 type StudentRow = { registerNumber: string; name: string };
 type QuestionRow = { id: string; name: string; text: string; coId: string; maxScore: string };
@@ -557,7 +557,9 @@ export default function MarksUploadWorkspace() {
           <select className="w-full rounded-lg border border-gray-300 px-3 py-2" value={selectedCourse} onChange={(event) => setSelectedCourse(event.target.value)}>
             <option value="">Select course</option>
             {courses.map((course) => (
-              <option key={course._id} value={course._id}>{course.name} ({course.code})</option>
+              <option key={course._id} value={course._id}>
+                {course.name} ({course.code}){course.section ? ` - Section ${course.section}` : ""}{course.session ? ` (${course.session})` : ""}
+              </option>
             ))}
           </select>
         </div>

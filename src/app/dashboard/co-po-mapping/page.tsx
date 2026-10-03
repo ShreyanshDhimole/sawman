@@ -137,7 +137,9 @@ export default function COPoMappingClient() {
         >
           <option value="">-- Choose Assigned Class --</option>
           {courses.map(c => (
-             <option key={c._id} value={c._id}>{c.name} ({c.code})</option>
+             <option key={c._id} value={c._id}>
+               {c.name} ({c.code}){c.section ? ` - Section ${c.section}` : ""}{c.session ? ` (${c.session})` : ""}
+             </option>
           ))}
         </select>
       </div>

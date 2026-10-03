@@ -8,7 +8,7 @@ import autoTable from "jspdf-autotable";
 import { getFacultyCourses } from "@/actions/faculty-actions";
 import { generateCourseReportData } from "@/actions/report-actions";
 
-type Course = { _id: string; name: string; code: string };
+type Course = { _id: string; name: string; code: string; section?: string; session?: string };
 
 function average(values: number[]) {
   if (!values.length) return 0;
@@ -218,7 +218,9 @@ export default function ReportsWorkspace() {
           >
             <option value="">Select course</option>
             {courses.map((course) => (
-              <option key={course._id} value={course._id}>{course.name} ({course.code})</option>
+              <option key={course._id} value={course._id}>
+                {course.name} ({course.code}){course.section ? ` - Section ${course.section}` : ""}{course.session ? ` (${course.session})` : ""}
+              </option>
             ))}
           </select>
         </div>
@@ -238,7 +240,9 @@ export default function ReportsWorkspace() {
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{reportData.course.name}</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {reportData.course.name} ({reportData.course.code}){reportData.course.section ? ` - Section ${reportData.course.section}` : ""}
+                </h2>
                 <p className="text-sm text-gray-500">
                   Overall Course Attainment: <span className="font-semibold text-slate-900">{reportData.overallCourseAttainment}</span>
                 </p>

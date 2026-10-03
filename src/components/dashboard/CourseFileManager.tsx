@@ -261,7 +261,7 @@ export default function CourseFileManager({
           <option value="">-- Choose Subject --</option>
           {courses.map((c) => (
             <option key={c._id} value={c._id}>
-              {c.name} ({c.code}) - {c.session}
+              {c.name} ({c.code}){c.section ? ` - Section ${c.section}` : ""}{c.session ? ` (${c.session})` : ""}
             </option>
           ))}
         </select>

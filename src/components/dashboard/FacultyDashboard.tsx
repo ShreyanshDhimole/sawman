@@ -84,7 +84,7 @@ export default function FacultyDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900">Course Administration</h3>
                 {activeCourse && (
                    <p className="text-sm text-gray-500 mt-1">
-                     {activeCourse.program || 'B.Tech'} • Year {activeCourse.year || 'N/A'} • {activeCourse.session || 'Unknown Session'}
+                     {activeCourse.program || 'B.Tech'} • Year {activeCourse.year || 'N/A'}{activeCourse.section ? ` • Section ${activeCourse.section}` : ""} • {activeCourse.session || 'Unknown Session'}
                    </p>
                 )}
               </div>
@@ -94,14 +94,16 @@ export default function FacultyDashboard() {
                 onChange={(e) => setSelectedCourseIdx(Number(e.target.value))}
               >
                 {stats.courseAttainments.map((c: any, i: number) => (
-                  <option key={c.courseId} value={i}>{c.courseName} ({c.courseCode})</option>
+                  <option key={c.courseId} value={i}>
+                    {c.courseName} ({c.courseCode}){c.section ? ` - Section ${c.section}` : ""}{c.session ? ` (${c.session})` : ""}
+                  </option>
                 ))}
               </select>
             </div>
             
             {activeCourse && (
               <>
-                <StudentUpload courseId={activeCourse.courseId} courseName={activeCourse.courseName} />
+                <StudentUpload courseId={activeCourse.courseId} courseName={`${activeCourse.courseName}${activeCourse.section ? ` (Section ${activeCourse.section})` : ""}`} />
                 
                 {activeCourse.students && activeCourse.students.length > 0 && (
                   <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">

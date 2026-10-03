@@ -232,6 +232,8 @@ export async function getFacultyDashboardStats(email: string) {
       session: (course as any).session,
       program: (course as any).program,
       year: (course as any).year,
+      section: (course as any).section,
+      semester: (course as any).semester,
       coRows,
       students
     });
